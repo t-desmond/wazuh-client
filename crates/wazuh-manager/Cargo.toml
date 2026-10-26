@@ -1,0 +1,24 @@
+[package]
+name = "wazuh-manager"
+description = "Client for the Wazuh Manager REST API (port 55000)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wazuh-core = { path = "../wazuh-core" }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[features]
+default = ["agents"]
+# Fine-grained resource modules. Only what you enable gets compiled in.
+agents = []
+rules = []
+cluster = []
+rbac = []
+full = ["agents", "rules", "cluster", "rbac"]

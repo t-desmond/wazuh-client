@@ -1,0 +1,19 @@
+[package]
+name = "wazuh-cli"
+description = "Pipeline-friendly CLI for the Wazuh Manager API"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "wazuhctl"
+path = "src/main.rs"
+
+[dependencies]
+wazuh-core = { path = "../wazuh-core" }
+wazuh-manager = { path = "../wazuh-manager" }
+clap = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
