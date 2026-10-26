@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use crate::error::WazuhError;
@@ -22,6 +23,10 @@ pub struct ManagerConfig {
     pub password: String,
     /// Verify TLS certificates. Defaults to `true`.
     pub verify_tls: bool,
+    /// Optional path to a PEM CA certificate to trust in addition to the system
+    /// roots. Lets callers talk to a manager with a self-signed / private CA
+    /// cert while keeping verification on (instead of disabling it wholesale).
+    pub ca_cert: Option<PathBuf>,
     /// Per-request timeout.
     pub timeout: Duration,
     /// Proactive token refresh interval (default 840s).
@@ -40,6 +45,7 @@ impl Default for ManagerConfig {
             username: String::new(),
             password: String::new(),
             verify_tls: true,
+            ca_cert: None,
             timeout: Duration::from_secs(30),
             token_ttl: Duration::from_secs(840),
             rate_limit_max: 12,

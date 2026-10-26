@@ -50,6 +50,10 @@ struct Cli {
     #[arg(long)]
     insecure: bool,
 
+    /// Path to a PEM CA certificate to trust (for self-signed / private-CA managers)
+    #[arg(long, env = "WAZUH_API_CA_CERT", value_name = "PATH")]
+    ca_cert: Option<std::path::PathBuf>,
+
     /// Output format (json is the default so pipelines can pipe into jq)
     #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
     output: OutputFormat,
@@ -112,13 +116,23 @@ async fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             eprintln!("error: {err}");
-            if matches!(err, WazuhError::Network { .. } | WazuhError::Timeout) {
-                eprintln!(
-                    "hint: could not reach the manager at {}:{}. Check that the host is \
-                     reachable (firewall/VPN) and the port is correct.",
-                    cli.host.as_deref().unwrap_or("<host>"),
-                    cli.port
-                );
+            match &err {
+                WazuhError::Tls { .. } => {
+                    eprintln!(
+                        "hint: the manager's TLS certificate could not be verified. If it is \
+                         self-signed or signed by a private CA, provide the CA certificate with \
+                         --ca-cert (or WAZUH_API_CA_CERT), or use --insecure for testing only."
+                    );
+                }
+                WazuhError::Network { .. } | WazuhError::Timeout => {
+                    eprintln!(
+                        "hint: could not reach the manager at {}:{}. Check that the host is \
+                         reachable (firewall/VPN) and the port is correct.",
+                        cli.host.as_deref().unwrap_or("<host>"),
+                        cli.port
+                    );
+                }
+                _ => {}
             }
             ExitCode::from(exit_code(&err))
         }
@@ -139,7 +153,7 @@ fn exit_code(err: &WazuhError) -> u8 {
         WazuhError::Partial(_) => 1,
         WazuhError::Auth { .. } | WazuhError::Unauthorized => 2,
         WazuhError::Api { .. } | WazuhError::Http { .. } => 3,
-        WazuhError::Network { .. } | WazuhError::Timeout => 4,
+        WazuhError::Network { .. } | WazuhError::Timeout | WazuhError::Tls { .. } => 4,
         WazuhError::NotFound { .. } => 5,
         WazuhError::Config(_) => 6,
         WazuhError::Json(_) => 7,
@@ -162,6 +176,7 @@ async fn run(cli: &Cli) -> Result<(), WazuhError> {
             .clone()
             .ok_or_else(|| WazuhError::Config("missing --password (or WAZUH_API_PASSWORD)".into()))?,
         verify_tls: !cli.insecure,
+        ca_cert: cli.ca_cert.clone(),
         timeout: Duration::from_secs(cli.timeout),
         ..ManagerConfig::default()
     };

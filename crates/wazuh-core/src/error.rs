@@ -59,6 +59,13 @@ pub enum WazuhError {
         source: Box<dyn StdError + Send + Sync>,
     },
 
+    /// The server's TLS certificate could not be verified (e.g. self-signed or
+    /// signed by an untrusted CA). Kept distinct from [`WazuhError::Network`]
+    /// so callers can point the user at the right remediation (trust the CA or
+    /// disable verification) instead of blaming the network.
+    #[error("tls error: {message}")]
+    Tls { message: String },
+
     /// The request exceeded the configured timeout.
     #[error("request timed out")]
     Timeout,

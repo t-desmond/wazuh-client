@@ -158,9 +158,27 @@ struct AuthState {
 impl ManagerClient {
     pub fn new(config: ManagerConfig) -> Result<Self, WazuhError> {
         config.validate()?;
-        let http = reqwest::Client::builder()
+        let mut builder = reqwest::Client::builder()
             .timeout(config.timeout)
-            .danger_accept_invalid_certs(!config.verify_tls)
+            .danger_accept_invalid_certs(!config.verify_tls);
+
+        if let Some(ca_path) = &config.ca_cert {
+            let pem = std::fs::read(ca_path).map_err(|e| {
+                WazuhError::Config(format!(
+                    "failed to read CA certificate {}: {e}",
+                    ca_path.display()
+                ))
+            })?;
+            let cert = reqwest::Certificate::from_pem(&pem).map_err(|e| {
+                WazuhError::Config(format!(
+                    "failed to parse CA certificate {}: {e}",
+                    ca_path.display()
+                ))
+            })?;
+            builder = builder.add_root_certificate(cert);
+        }
+
+        let http = builder
             .build()
             .map_err(|e| WazuhError::Config(format!("failed to build http client: {e}")))?;
 
@@ -309,9 +327,36 @@ fn map_reqwest_error(e: reqwest::Error) -> WazuhError {
     if e.is_timeout() {
         return WazuhError::Timeout;
     }
+    // A TLS handshake / certificate failure is not a connectivity problem —
+    // surface it distinctly so the caller can point at the right remediation.
+    if let Some(message) = tls_error_message(&e) {
+        return WazuhError::Tls { message };
+    }
     WazuhError::Network {
         source: Box::new(e),
     }
+}
+
+/// Walk the error source chain looking for a TLS / certificate failure.
+///
+/// reqwest wraps hyper, which wraps rustls; the meaningful message (e.g.
+/// `invalid peer certificate: UnknownIssuer`) lives several layers down, so we
+/// inspect the whole chain rather than just the top-level error.
+fn tls_error_message(e: &(dyn std::error::Error + 'static)) -> Option<String> {
+    let mut cur: Option<&(dyn std::error::Error + 'static)> = Some(e);
+    while let Some(err) = cur {
+        let lower = err.to_string().to_lowercase();
+        if lower.contains("certificate")
+            || lower.contains("tls")
+            || lower.contains("handshake")
+            || lower.contains("unknownissuer")
+            || lower.contains("invalid peer")
+        {
+            return Some(err.to_string());
+        }
+        cur = err.source();
+    }
+    None
 }
 
 #[cfg(test)]
@@ -398,5 +443,33 @@ mod tests {
         let info: ApiInfo = serde_json::from_value(env.data).unwrap();
         assert_eq!(info.api_version.as_deref(), Some("4.9.2"));
         assert_eq!(info.hostname.as_deref(), Some("single-cluster"));
+    }
+
+    #[derive(Debug)]
+    struct TestError(&'static str);
+
+    impl std::fmt::Display for TestError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+
+    impl std::error::Error for TestError {}
+
+    #[test]
+    fn detects_tls_error_deep_in_chain() {
+        // Simulate reqwest -> hyper -> rustls: the TLS message is buried.
+        let inner = TestError("invalid peer certificate: UnknownIssuer");
+        let mid = std::io::Error::new(std::io::ErrorKind::Other, inner);
+        let chain = std::io::Error::new(std::io::ErrorKind::Other, mid);
+
+        let msg = tls_error_message(&chain).expect("should find the TLS message");
+        assert!(msg.contains("UnknownIssuer"));
+    }
+
+    #[test]
+    fn does_not_flag_plain_connect_error_as_tls() {
+        let err = TestError("connection refused");
+        assert!(tls_error_message(&err).is_none());
     }
 }

@@ -44,6 +44,22 @@ export WAZUH_API_USER=wazuh
 export WAZUH_API_PASSWORD='...'
 ```
 
+### TLS
+
+TLS certificate verification is **on by default**. If your manager uses a
+self-signed or private-CA certificate, trust it explicitly rather than
+disabling verification:
+
+```bash
+# Trust the manager's CA cert (keeps verification on)
+wazuhctl --ca-cert /path/to/manager-ca.pem ping
+
+# ...or, for testing only, skip verification entirely
+wazuhctl --insecure ping
+```
+
+A failed certificate check is reported distinctly from a connectivity problem.
+
 ### Commands
 
 ```bash
@@ -72,7 +88,7 @@ Pipelines branch on exit codes, not stderr text:
 | `1` | partial failure (some items failed) |
 | `2` | authentication failure |
 | `3` | API error |
-| `4` | network error / timeout |
+| `4` | network error / timeout / TLS verification failure |
 | `5` | resource not found |
 | `6` | configuration error |
 | `7` | response decode error |
