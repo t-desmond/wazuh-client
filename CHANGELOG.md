@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Documentation
+
+- Generate changelog with git-cliff ([`6eb63d4`](https://github.com/t-desmond/wazuh-client/commit/6eb63d469ac3c023caa31fce1545a755f5b03c1f))
+
+### Miscellaneous Tasks
+
+- Add project governance and quality files ([`b044ea9`](https://github.com/t-desmond/wazuh-client/commit/b044ea92b13c1686429c6e37b7a6c4919d2fdf16))
+- Add lint, test, and build workflow ([`c130a5c`](https://github.com/t-desmond/wazuh-client/commit/c130a5cba7b69aeb819bd2e752285189ca83c9e6))
+- Use fixed bot branch for changelog and add pre-commit ([`3ae2266`](https://github.com/t-desmond/wazuh-client/commit/3ae2266e149e583a6241a17f282d274ab47c91a4))
+
 ### Other
 
 - Initial scaffold: wazuh-core, wazuh-manager, wazuhctl CLI ([`92414a6`](https://github.com/t-desmond/wazuh-client/commit/92414a6aabf70120a46fdb5ab21cbfda4f8f6b74))
