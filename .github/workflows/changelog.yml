@@ -27,7 +27,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
       - name: Generate CHANGELOG.md
-        uses: orhun/git-cliff-action@v4
+        uses: orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff
         with:
           config: cliff.toml
           args: --output CHANGELOG.md
@@ -45,13 +45,19 @@ jobs:
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add CHANGELOG.md
           git commit -m "docs: update CHANGELOG.md [skip ci]"
+
           if [[ "$TARGET_BRANCH" == "main" ]]; then
-            BRANCH="bot/update-changelog-${GITHUB_RUN_ID}"
-            git checkout -b "$BRANCH"
-            git push origin "$BRANCH"
-            gh pr create --base main --head "$BRANCH" \
-              --title "docs: update CHANGELOG.md" \
-              --body "Automated update of CHANGELOG.md"
+            # Update a single fixed bot branch (force-push keeps it in sync),
+            # and open a PR against main if one isn't already open.
+            git checkout -B bot/update-changelog
+            git push --force origin bot/update-changelog
+            if ! gh pr view bot/update-changelog --json number --jq .number >/dev/null 2>&1; then
+              gh pr create --base main --head bot/update-changelog \
+                --title "docs: update CHANGELOG.md" \
+                --body "Automated update of CHANGELOG.md" \
+                || echo "::warning::Could not create PR (GitHub Actions token may lack permission to create pull requests)"
+            fi
           else
+            # On a PR, push the changelog update straight to the PR's branch.
             git push origin "$TARGET_BRANCH"
           fi

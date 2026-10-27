@@ -110,3 +110,16 @@ cargo test -p wazuh-manager
   warnings (CI enforces this).
 - Follow the existing conventions: params structs over positional `Option`
   soup, JSON output by default, logs to stderr, data to stdout.
+
+## Pre-commit
+
+A [pre-commit](https://pre-commit.com) config is provided to catch issues
+before they land. Install it once:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+It runs formatting, linting, tests, and secret scanning (gitleaks) on staged
+files. Run it manually with `pre-commit run --all-files`.

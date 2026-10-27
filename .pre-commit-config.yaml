@@ -1,0 +1,45 @@
+---
+# .pre-commit-config.yaml
+# Install with: `pre-commit install`
+# Run on all files with: `pre-commit run --all-files`
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # Secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        description: Check formatting with rustfmt.
+        entry: cargo fmt --all -- --check
+        language: rust
+        types: [ rust ]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: cargo clippy
+        description: Lint files with clippy.
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: rust
+        types: [ rust ]
+        pass_filenames: false
+
+      - id: cargo-test
+        name: cargo test
+        description: Run the test suite.
+        entry: cargo test --all-features
+        language: rust
+        types: [ rust ]
+        pass_filenames: false
