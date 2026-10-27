@@ -190,7 +190,13 @@ mod tests {
             ..Default::default()
         };
         let q = params.to_query();
-        assert_eq!(q, vec![("limit".into(), "10".into()), ("status".into(), "active".into())]);
+        assert_eq!(
+            q,
+            vec![
+                ("limit".into(), "10".into()),
+                ("status".into(), "active".into())
+            ]
+        );
     }
 
     #[test]

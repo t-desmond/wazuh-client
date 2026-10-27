@@ -1,5 +1,8 @@
 # wazuh-client
 
+[![CI](https://github.com/t-desmond/wazuh-client/actions/workflows/ci.yml/badge.svg)](https://github.com/t-desmond/wazuh-client/actions/workflows/ci.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+
 Rust workspace for talking to [Wazuh](https://wazuh.com) — a Manager REST API
 client library, a CLI built on top of it, and shared primitives. Designed for
 automated pipelines from day one.
@@ -12,6 +15,14 @@ wazuh-client/
 │   ├── wazuh-indexer/    # Indexer/OpenSearch API (:9200) — not yet implemented
 │   └── wazuh-cli/        # `wazuhctl` binary — thin consumer of the library
 ```
+
+## Documentation
+
+- [Contributing](CONTRIBUTING.md) — how to build, test, and submit changes
+- [Security](SECURITY.md) — how to report a vulnerability
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Changelog](CHANGELOG.md)
+- [Roadmap](ROADMAP.md)
 
 ## Crates
 
@@ -173,4 +184,9 @@ and the research lessons that drive it). Short version:
 
 ## License
 
-MIT OR Apache-2.0
+Dual-licensed under either of:
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.

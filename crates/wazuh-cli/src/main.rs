@@ -33,13 +33,23 @@ struct Cli {
     #[arg(long, env = "WAZUH_API_HOST", value_name = "HOST")]
     host: Option<String>,
 
-    #[arg(long, env = "WAZUH_API_PORT", default_value_t = 55000, value_name = "PORT")]
+    #[arg(
+        long,
+        env = "WAZUH_API_PORT",
+        default_value_t = 55000,
+        value_name = "PORT"
+    )]
     port: u16,
 
     #[arg(long, env = "WAZUH_API_USER", value_name = "USER")]
     user: Option<String>,
 
-    #[arg(long, env = "WAZUH_API_PASSWORD", value_name = "PASSWORD", hide_env_values = true)]
+    #[arg(
+        long,
+        env = "WAZUH_API_PASSWORD",
+        value_name = "PASSWORD",
+        hide_env_values = true
+    )]
     password: Option<String>,
 
     /// Request timeout in seconds
@@ -171,10 +181,9 @@ async fn run(cli: &Cli) -> Result<(), WazuhError> {
             .user
             .clone()
             .ok_or_else(|| WazuhError::Config("missing --user (or WAZUH_API_USER)".into()))?,
-        password: cli
-            .password
-            .clone()
-            .ok_or_else(|| WazuhError::Config("missing --password (or WAZUH_API_PASSWORD)".into()))?,
+        password: cli.password.clone().ok_or_else(|| {
+            WazuhError::Config("missing --password (or WAZUH_API_PASSWORD)".into())
+        })?,
         verify_tls: !cli.insecure,
         ca_cert: cli.ca_cert.clone(),
         timeout: Duration::from_secs(cli.timeout),
@@ -237,11 +246,17 @@ fn print_ping(format: OutputFormat, info: &ApiInfo, latency_ms: u64) {
                 "type": info.r#type,
                 "latency_ms": latency_ms,
             });
-            println!("{}", serde_json::to_string_pretty(&out).expect("ping serializes"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&out).expect("ping serializes")
+            );
         }
         OutputFormat::Table => {
             println!("Reachable:   yes");
-            println!("API version: {}", info.api_version.as_deref().unwrap_or("-"));
+            println!(
+                "API version: {}",
+                info.api_version.as_deref().unwrap_or("-")
+            );
             println!("Hostname:    {}", info.hostname.as_deref().unwrap_or("-"));
             println!("Type:        {}", info.r#type.as_deref().unwrap_or("-"));
             println!("Latency:     {latency_ms} ms");
@@ -252,10 +267,17 @@ fn print_ping(format: OutputFormat, info: &ApiInfo, latency_ms: u64) {
 fn print_agents(format: OutputFormat, agents: &[Agent]) {
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(agents).expect("agents serialize"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(agents).expect("agents serialize")
+            );
         }
         OutputFormat::Table => {
-            println!("{:<5} {:<28} {:<16} {:<15} {}", "ID", "NAME", "STATUS", "IP", "OS");
+            let header = format!(
+                "{:<5} {:<28} {:<16} {:<15} {}",
+                "ID", "NAME", "STATUS", "IP", "OS"
+            );
+            println!("{header}");
             for a in agents {
                 println!(
                     "{:<5} {:<28} {:<16} {:<15} {}",
@@ -263,9 +285,7 @@ fn print_agents(format: OutputFormat, agents: &[Agent]) {
                     truncate(&a.name, 28),
                     a.status.as_deref().unwrap_or("-"),
                     a.ip.as_deref().unwrap_or("-"),
-                    a.os.as_ref()
-                        .and_then(|o| o.name.as_deref())
-                        .unwrap_or("-"),
+                    a.os.as_ref().and_then(|o| o.name.as_deref()).unwrap_or("-"),
                 );
             }
         }
@@ -275,7 +295,10 @@ fn print_agents(format: OutputFormat, agents: &[Agent]) {
 fn print_agent(format: OutputFormat, agent: &Agent) {
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(agent).expect("agent serializes"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(agent).expect("agent serializes")
+            );
         }
         OutputFormat::Table => print_agents(format, std::slice::from_ref(agent)),
     }

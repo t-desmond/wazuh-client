@@ -250,9 +250,9 @@ impl ManagerClient {
             req = req.json(b);
         }
 
-        let resp = req.send().await.map_err(|e| map_reqwest_error(e))?;
+        let resp = req.send().await.map_err(map_reqwest_error)?;
         let status = resp.status().as_u16();
-        let text = resp.text().await.map_err(|e| map_reqwest_error(e))?;
+        let text = resp.text().await.map_err(map_reqwest_error)?;
 
         if !(200..300).contains(&status) {
             return Err(WazuhError::from_http_response(status, &url, Some(&text)));
@@ -272,7 +272,10 @@ impl ManagerClient {
             if at.elapsed() < self.config.token_ttl {
                 return Ok(token.clone());
             }
-            debug!("token older than {:?}; refreshing proactively", self.config.token_ttl);
+            debug!(
+                "token older than {:?}; refreshing proactively",
+                self.config.token_ttl
+            );
         }
         self.authenticate_locked(&mut state).await
     }
@@ -291,13 +294,16 @@ impl ManagerClient {
         let resp = self
             .http
             .post(&url)
-            .basic_auth(self.config.username.clone(), Some(self.config.password.clone()))
+            .basic_auth(
+                self.config.username.clone(),
+                Some(self.config.password.clone()),
+            )
             .send()
             .await
-            .map_err(|e| map_reqwest_error(e))?;
+            .map_err(map_reqwest_error)?;
 
         let status = resp.status().as_u16();
-        let text = resp.text().await.map_err(|e| map_reqwest_error(e))?;
+        let text = resp.text().await.map_err(map_reqwest_error)?;
 
         if status == 401 {
             return Err(WazuhError::Auth {
@@ -460,8 +466,8 @@ mod tests {
     fn detects_tls_error_deep_in_chain() {
         // Simulate reqwest -> hyper -> rustls: the TLS message is buried.
         let inner = TestError("invalid peer certificate: UnknownIssuer");
-        let mid = std::io::Error::new(std::io::ErrorKind::Other, inner);
-        let chain = std::io::Error::new(std::io::ErrorKind::Other, mid);
+        let mid = std::io::Error::other(inner);
+        let chain = std::io::Error::other(mid);
 
         let msg = tls_error_message(&chain).expect("should find the TLS message");
         assert!(msg.contains("UnknownIssuer"));

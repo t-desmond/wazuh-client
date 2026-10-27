@@ -1,0 +1,14 @@
+# Default owner for everything not matched below
+* @t-desmond
+
+# Core shared primitives
+/crates/wazuh-core/ @t-desmond
+
+# Manager API client
+/crates/wazuh-manager/ @t-desmond
+
+# CLI binary
+/crates/wazuh-cli/ @t-desmond
+
+# CI and repo tooling
+/.github/ @t-desmond
